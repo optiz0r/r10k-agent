@@ -1,0 +1,5 @@
+# Generated content
+dist/
+puppet/
+vendor/
+*.tgz

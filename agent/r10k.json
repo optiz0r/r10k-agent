@@ -1,0 +1,33 @@
+{
+  "$schema": "https://choria.io/schemas/mcorpc/ddl/v1/agent.json",
+  "metadata": {
+    "license": "Apache-2.0",
+    "author": "Ben Roberts \u003cme@benroberts.net\u003e",
+    "timeout": 60,
+    "name": "r10k",
+    "version": "0.1.0",
+    "url": "https://github.com/optiz0r/r10k-agent",
+    "description": "An MCollective agent to run r10k to deploy puppet environments on puppetservers",
+    "provider": "external"
+  },
+  "actions": [
+    {
+      "action": "deploy",
+      "input": {},
+      "output": {
+       "stdout": {
+          "description": "Stdout from r10k",
+          "display_as": "stdout",
+          "default": ""
+        },
+        "stderr": {
+          "description": "Stderr from r10k",
+          "display_as": "stderr",
+          "default": ""
+        }
+      },
+      "display": "failed",
+      "description": "Deploys puppet environments"
+    }
+  ]
+}

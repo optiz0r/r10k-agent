@@ -1,0 +1,61 @@
+#!/usr/bin/python3.8
+
+import logging
+import os
+import subprocess
+
+from distutils.spawn import find_executable
+from mco_agent import Agent, action, dispatch, register_actions
+
+
+@register_actions
+class R10k(Agent):
+
+    # Allow the user to provide their own preferred paths,
+    # but always fall back to the following hardcoded list
+    PATH = ':'.join([
+        os.environ.get('PATH', ''),
+        '/usr/bin:/usr/sbin:/bin:/sbin:/opt/puppetlabs/puppet/bin'])
+
+    def should_activate(self):
+        r10k_exe = find_executable('r10k', self.PATH)
+        if r10k_exe is None:
+            self.logger.debug("Did not find r10k, disabling")
+            return False
+        else:
+            self.logger.debug("Found r10k at {0}, enabling".format(r10k_exe))
+            return True
+
+    @action
+    def deploy(self):
+        """ Updates all puppet environments on a puppetserver
+        """
+        # Since py-mco-agent disables all logging by default
+        # Re-enable logging for the environment manager library
+        logging.getLogger('.').setLevel(self.logger.getEffectiveLevel())
+        logging.getLogger('r10k').setLevel(self.logger.getEffectiveLevel())
+
+        self.logger.debug("Starting deploy")
+
+        try:
+            proc = subprocess.run(
+                ['r10k', 'deploy', 'environment', '-v', '-m', '--generate-types'],
+                capture_output=True,
+                env={'PATH': self.PATH})
+            self.reply.data = {
+                'stdout': str(proc.stdout.decode('utf-8')),
+                'stderr': str(proc.stderr.decode('utf-8')),
+            }
+        except subprocess.CalledProcessError as exc:
+            self.reply.statuscode = 5
+            self.reply.statusmsg = f"r10k deploy exited with status {exc.returncode}"
+            self.reply.data = {
+                'stdout': str(exc.stdout.decode('utf-8')),
+                'stderr': str(exc.stderr.decode('utf-8')),
+            }
+        
+        self.logger.debug("Finished deploy")
+
+
+if __name__ == '__main__':
+    dispatch(R10k)
